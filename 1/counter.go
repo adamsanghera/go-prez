@@ -12,9 +12,9 @@ const (
 	numCounters = int64(4)
 )
 
-// gaussianCounter calculates the gaussian sum range (start, end].
+// counter calculates the gaussian sum range (start, end].
 // Therefore, usage should be (0, 10], (10, 20), etc.
-func gaussianCounter(start, end, id int64, outbox chan int64) {
+func counter(start, end, id int64, outbox chan int64) {
 	result := int64(0)
 	for idx := start; idx < end; idx++ {
 		result += idx
@@ -35,7 +35,7 @@ func main() {
 
 	// Make our return channel
 	inbox := make(chan int64)
-	numRoutines := 0
+	numAliveRoutines := 0
 
 	// Spawn our counters
 	for idx := int64(0); idx < numCounters; idx++ {
@@ -45,14 +45,14 @@ func main() {
 		// In the case where the number is less than 10
 		// we can avoid spawning 10 routines = nice.
 		if start < end {
-			numRoutines++
-			go gaussianCounter(start, end, idx, inbox)
+			numAliveRoutines++
+			go counter(start, end, idx, inbox)
 		}
 	}
 
 	// Collect our results
 	finalResult := int64(0)
-	for id := 0; id < numRoutines; id++ {
+	for id := 0; id < numAliveRoutines; id++ {
 		log.Printf("Blocking on reply from a worker...")
 		piece := <-inbox
 		log.Printf("Received partial sum %d\n", piece)
